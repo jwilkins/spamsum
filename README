@@ -1,0 +1,24 @@
+SpamSum v0.1
+==============
+SpamSum is a distance based hash.  This is the opposite of a cryptographic
+hash in that two slightly different inputs will have similar (or even
+identical outputs).
+
+The original spamsum code was released under the Perl Artistic License
+and is Copyright Andrew Tridgell <tridge@samba.org> 2002
+It is available here:
+  http://www.samba.org/junkcode/#spamsum
+or here:
+  http://linux.anu.edu.au/linux.conf.au/2004/papers/junkcode/spamsum
+
+More information on the algorithm itself is here:
+  http://samba.org/ftp/unpacked/junkcode/spamsum/README
+
+Ruby wrapper is released under GPL v2
+Copyright 2009 Jonathan Wilkins <jwilkins@bitland.net>
+
+Building
+--------
+$ swig -ruby spamsum.i
+$ ruby extconf.rb
+$ make
