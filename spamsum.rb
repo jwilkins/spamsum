@@ -1,4 +1,8 @@
-require 'spamsum_swig'
+begin
+  require 'spamsum_swig'
+rescue LoadError
+  require 'ext/spamsum_swig'
+end
 module Spamsum
   def Spamsum.sum(s, flags=0, bsize=0)
     Spamsum_swig.spamsum(s, s.length, flags, bsize)
