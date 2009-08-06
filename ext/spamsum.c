@@ -104,7 +104,7 @@ static inline u32 sum_hash(uchar c, u32 h)
   take a message of length 'length' and return a string representing a hash of that message,
   prefixed by the selected blocksize
 */
-char *sum(const uchar *in, u32 length, u32 flags, u32 bsize)
+char *spamsum(const uchar *in, u32 length, u32 flags, u32 bsize)
 {
 	const char *b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	char *ret, *p;
@@ -373,7 +373,7 @@ static unsigned score_strings(const char *s1, const char *s2, u32 block_size)
 /*
   given two spamsum strings return a value indicating the degree to which they match.
 */
-u32 match(const char *str1, const char *str2)
+u32 spamsum_match(const char *str1, const char *str2)
 {
 	u32 block_size1, block_size2;
 	u32 score = 0;
@@ -452,7 +452,7 @@ u32 match(const char *str1, const char *str2)
 /*
   return the maximum match for a file containing a list of spamsums
 */
-u32 match_db(const char *fname, const char *sum, u32 threshold)
+u32 spamsum_match_db(const char *fname, const char *sum, u32 threshold)
 {
 	FILE *f;
 	char line[100];
@@ -469,7 +469,7 @@ u32 match_db(const char *fname, const char *sum, u32 threshold)
 		len = strlen(line);
 		if (line[len-1] == '\n') line[len-1] = 0;
 
-		score = match(sum, line);
+		score = spamsum_match(sum, line);
 
 		if (score > best) {
 			best = score;
@@ -636,7 +636,7 @@ int main(int argc, char *argv[])
              show_help();
              exit(1);
          }
-         score = match_db(dbname, optarg,
+         score = spamsum_match_db(dbname, optarg,
                       threshold);
          printf("%u\n", score);
          exit(score >= threshold ? 0 : 2);
@@ -646,7 +646,7 @@ int main(int argc, char *argv[])
              show_help();
              exit(1);
          }
-         score = match_db(dbname,
+         score = spamsum_match_db(dbname,
                       spamsum_file(optarg, flags,
                                block_size),
                       threshold);

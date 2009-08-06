@@ -1,0 +1,5 @@
+Makefile
+spamsum.o
+edit_dist.o
+spamsum_wrap.o
+spamsum_swig.bundle
