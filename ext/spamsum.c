@@ -28,7 +28,7 @@
 #include <ctype.h>
 
 /* the output is a string of length 64 in base64 */
-#define SPAMSUM_LENGTH 64
+#define SPAMSUM_LENGTH 128
 
 #define MIN_BLOCKSIZE 3
 #define HASH_PRIME 0x01000193
@@ -107,6 +107,7 @@ static inline u32 sum_hash(uchar c, u32 h)
 char *spamsum(const uchar *in, u32 length, u32 flags, u32 bsize)
 {
 	const char *b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	const char *h16 = "0123456789ABCDEF";
 	char *ret, *p;
 	u32 total_chars;
 	u32 h, h2, h3;
@@ -178,7 +179,7 @@ again:
 			   hash which is based on all chacaters in the
 			   piece of the message between the last reset
 			   point and this one */
-			p[j] = b64[h2 % 64];
+			snprintf(&p[j], 2, "%02x", h2);
 			if (j < SPAMSUM_LENGTH-1) {
 				/* we can have a problem with the tail
 				   overflowing. The easiest way to
@@ -198,7 +199,7 @@ again:
 		   this way the effect of small changes in the message
 		   size near a block size boundary is greatly reduced. */
 		if (h % (block_size*2) == ((block_size*2)-1)) {
-			ret2[k] = b64[h3 % 64];
+			snprintf(&ret2[k], 2, "%02x", h3);
 			if (k < SPAMSUM_LENGTH/2-1) {
 				h3 = HASH_INIT;
 				k++;
@@ -210,8 +211,8 @@ again:
 	   ensures that the last part of the message is always
 	   considered */
 	if (h != 0) {
-		p[j] = b64[h2 % 64];
-		ret2[k] = b64[h3 % 64];
+		snprintf(&p[j], 2, "%02x", h2);
+		snprintf(&ret2[k], 2, "%02x", h3);
 	}
 
 	strcat(p+j, ":");
