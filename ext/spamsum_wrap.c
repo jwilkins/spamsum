@@ -2088,6 +2088,61 @@ fail:
 
 
 SWIGINTERN VALUE
+_wrap_spamsum_hex(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  unsigned int arg2 ;
+  unsigned int arg3 = (unsigned int) 0 ;
+  unsigned int arg4 = (unsigned int) 0 ;
+  char *result = 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned int val4 ;
+  int ecode4 = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 2) || (argc > 4)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc); SWIG_fail;
+  }
+  res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), Ruby_Format_TypeError( "", "char *","spamsum_hex", 1, argv[0] ));
+  }
+  arg1 = (char *)(buf1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(argv[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), Ruby_Format_TypeError( "", "unsigned int","spamsum_hex", 2, argv[1] ));
+  } 
+  arg2 = (unsigned int)(val2);
+  if (argc > 2) {
+    ecode3 = SWIG_AsVal_unsigned_SS_int(argv[2], &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), Ruby_Format_TypeError( "", "unsigned int","spamsum_hex", 3, argv[2] ));
+    } 
+    arg3 = (unsigned int)(val3);
+  }
+  if (argc > 3) {
+    ecode4 = SWIG_AsVal_unsigned_SS_int(argv[3], &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), Ruby_Format_TypeError( "", "unsigned int","spamsum_hex", 4, argv[3] ));
+    } 
+    arg4 = (unsigned int)(val4);
+  }
+  result = (char *)spamsum_hex(arg1,arg2,arg3,arg4);
+  vresult = SWIG_FromCharPtr((const char *)result);
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return vresult;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
 _wrap_spamsum_match(int argc, VALUE *argv, VALUE self) {
   char *arg1 = (char *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2400,6 +2455,7 @@ SWIGEXPORT void Init_spamsum_swig(void) {
   SWIG_RubyInitializeTrackings();
   rb_define_module_function(mSpamsum_swig, "edit_distn", _wrap_edit_distn, -1);
   rb_define_module_function(mSpamsum_swig, "spamsum", _wrap_spamsum, -1);
+  rb_define_module_function(mSpamsum_swig, "spamsum_hex", _wrap_spamsum_hex, -1);
   rb_define_module_function(mSpamsum_swig, "spamsum_match", _wrap_spamsum_match, -1);
 }
 

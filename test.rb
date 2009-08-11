@@ -10,14 +10,29 @@ b3 = "\x00\xaa\xbb\xcc\xdd\x66\x77\x88\x99\x00\xaa"
 
 
 %w(s b).each { |t|
+  puts "-"*40
   (1..3).each { |x|
     puts "#{t}#{x}: #{eval("#{t}#{x}")}" if t == 's'
     puts "Spamsum.distance(#{t}1, #{t}#{x}): #{Spamsum.distance(eval("#{t}1"), eval("#{t}#{x}"))}"
     eval("s = #{t}#{x}")
+    puts "-"*20
 
     eval("$#{t}sum#{x} = Spamsum.sum(s)")
     puts "Spamsum.sum(#{t}#{x}): #{eval("$#{t}sum#{x}")}"
     puts "Spamsum.match(#{t}1, #{t}#{x}): #{Spamsum.match(eval("$#{t}sum1"), eval("$#{t}sum#{x}"))}"
+    puts "-"*20
+
+    eval("$#{t}hsum#{x} = Spamsum.sum_hex(s)")
+    puts "Spamsum.match(#{t}1, #{t}#{x}): #{Spamsum.match(eval("$#{t}hsum1"), eval("$#{t}hsum#{x}"))}"
   }
-  puts "-"*40
 }
+
+puts "-"*40
+%w(s b).each { |t|
+  (1..3).each { |x|
+    puts "Spamsum.sum_hex(#{t}#{x}): #{eval("$#{t}hsum#{x}")}"
+  }
+}
+
+puts "Spamsum.sum_hex(s1*1000): #{Spamsum.sum_hex(s1*1000)}"
+puts "Spamsum.sum_hex(s1*1000): #{Spamsum.sum_hex(open('random.bin').read)}"

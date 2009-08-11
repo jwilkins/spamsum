@@ -28,7 +28,8 @@
 #include <ctype.h>
 
 /* the output is a string of length 64 in base64 */
-#define SPAMSUM_LENGTH 128
+#define SPAMSUM_LENGTH 64
+#define SPAMSUM_HEX_LENGTH 128
 
 #define MIN_BLOCKSIZE 3
 #define HASH_PRIME 0x01000193
@@ -107,7 +108,6 @@ static inline u32 sum_hash(uchar c, u32 h)
 char *spamsum(const uchar *in, u32 length, u32 flags, u32 bsize)
 {
 	const char *b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	const char *h16 = "0123456789ABCDEF";
 	char *ret, *p;
 	u32 total_chars;
 	u32 h, h2, h3;
@@ -179,7 +179,7 @@ again:
 			   hash which is based on all chacaters in the
 			   piece of the message between the last reset
 			   point and this one */
-			snprintf(&p[j], 2, "%02x", h2);
+			p[j] = b64[h2 % 64];
 			if (j < SPAMSUM_LENGTH-1) {
 				/* we can have a problem with the tail
 				   overflowing. The easiest way to
@@ -199,8 +199,133 @@ again:
 		   this way the effect of small changes in the message
 		   size near a block size boundary is greatly reduced. */
 		if (h % (block_size*2) == ((block_size*2)-1)) {
-			snprintf(&ret2[k], 2, "%02x", h3);
+			ret2[k] = b64[h3 % 64];
 			if (k < SPAMSUM_LENGTH/2-1) {
+				h3 = HASH_INIT;
+				k++;
+			}
+		}
+	}
+
+	/* if we have anything left then add it to the end. This
+	   ensures that the last part of the message is always
+	   considered */
+	if (h != 0) {
+		p[j] = b64[h2 % 64];
+		ret2[k] = b64[h3 % 64];
+	}
+
+	strcat(p+j, ":");
+	strcat(p+j, ret2);
+
+	/* our blocksize guess may have been way off - repeat if necessary */
+	if (bsize == 0 && block_size > MIN_BLOCKSIZE && j < SPAMSUM_LENGTH/2) {
+		block_size = block_size / 2;
+		goto again;
+	}
+
+	return ret;
+}
+
+/*
+  take a message of length 'length' and return a string representing a hash of that message,
+  prefixed by the selected blocksize
+*/
+char *spamsum_hex(const uchar *in, u32 length, u32 flags, u32 bsize)
+{
+	char *ret, *p;
+	u32 total_chars;
+	u32 h, h2, h3;
+	u32 j, n, i, k;
+	u32 block_size;
+	uchar ret2[SPAMSUM_HEX_LENGTH/2 + 1];
+
+	/* if we are ignoring email headers then skip past them now */
+	if (flags & FLAG_IGNORE_HEADERS) {
+		const uchar *s = strstr(in, "\n\n");
+		if (s) {
+			length -= (s+2 - in);
+			in = s+2;
+		}
+	}
+
+	if (flags & FLAG_IGNORE_WHITESPACE) {
+		/* count the non-ignored chars */
+		for (n=0, i=0; i<length; i++) {
+			if (isspace(in[i])) continue;
+			n++;
+		}
+		total_chars = n;
+	} else {
+		total_chars = length;
+	}
+
+	if (bsize == 0) {
+	/* guess a reasonable block size */
+		block_size = MIN_BLOCKSIZE;
+		while (block_size * SPAMSUM_HEX_LENGTH < total_chars) {
+			block_size = block_size * 2;
+		}
+	} else {
+		block_size = bsize;
+	}
+
+	ret = malloc(SPAMSUM_HEX_LENGTH + SPAMSUM_HEX_LENGTH/2 + 20);
+	if (!ret) return NULL;
+
+again:
+	/* the first part of the spamsum signature is the blocksize */
+	snprintf(ret, 12, "%u:", block_size);
+	p = ret + strlen(ret);
+
+	memset(p, 0, SPAMSUM_HEX_LENGTH+1);
+	memset(ret2, 0, sizeof(ret2));
+
+	k = j = 0;
+	h3 = h2 = HASH_INIT;
+	h = roll_reset();
+
+	for (i=0; i<length; i++) {
+		if ((flags & FLAG_IGNORE_WHITESPACE) &&
+		    isspace(in[i])) continue;
+
+		/*
+		   at each character we update the rolling hash and
+		   the normal hash. When the rolling hash hits the
+		   reset value then we emit the normal hash as a
+		   element of the signature and reset both hashes
+		*/
+		h = roll_hash(in[i]);
+		h2 = sum_hash(in[i], h2);
+		h3 = sum_hash(in[i], h3);
+
+		if (h % block_size == (block_size-1)) {
+			/* we have hit a reset point. We now emit a
+			   hash which is based on all chacaters in the
+			   piece of the message between the last reset
+			   point and this one */
+			snprintf(&p[j], 2, "%02x", h2);
+			if (j < SPAMSUM_HEX_LENGTH-1) {
+				/* we can have a problem with the tail
+				   overflowing. The easiest way to
+				   cope with this is to only reset the
+				   second hash if we have room for
+				   more characters in our
+				   signature. This has the effect of
+				   combining the last few pieces of
+				   the message into a single piece */
+				h2 = HASH_INIT;
+				j++;
+			}
+		}
+
+		/* this produces a second signature with a block size
+		   of block_size*2. By producing dual signatures in
+		   this way the effect of small changes in the message
+		   size near a block size boundary is greatly reduced. */
+		if (h % (block_size*2) == ((block_size*2)-1)) {
+			snprintf(&ret2[k], 2, "%02x", h3);
+			if (k < SPAMSUM_HEX_LENGTH/2-1) {
 				h3 = HASH_INIT;
 				k++;
 			}
@@ -219,7 +344,7 @@ again:
 	strcat(p+j, ret2);
 
 	/* our blocksize guess may have been way off - repeat if necessary */
-	if (bsize == 0 && block_size > MIN_BLOCKSIZE && j < SPAMSUM_LENGTH/2) {
+	if (bsize == 0 && block_size > MIN_BLOCKSIZE && j < SPAMSUM_HEX_LENGTH/2) {
 		block_size = block_size / 2;
 		goto again;
 	}
